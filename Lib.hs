@@ -6,6 +6,7 @@ import GRM.Abs
 import GRM.Par (pCmd, myLexer)
 import GRM.ErrM
 import System.Process
+import System.Directory
 import Control.Exception
 
 someFunc :: IO ()
@@ -25,6 +26,13 @@ try' :: IO a ->  IO (Either IOException a)
 try' =  try 
 
 progrun :: Prg -> IO ()
+progrun (NPrg (Ident "cd") args) = do 
+    let arguments = map getArg args
+    homedir <- getHomeDirectory
+    case arguments of
+        [] -> setCurrentDirectory homedir
+        [x] -> setCurrentDirectory x
+        (x:xs) -> putStrLn "cd only takes 1 argument"
 progrun (NPrg (Ident p) args) = do 
     let arguments = map getArg args
     res <- try' $ createProcess (proc p arguments)
