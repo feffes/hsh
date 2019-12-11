@@ -6,11 +6,16 @@ import GRM.Abs
 import GRM.Par (pCmd, myLexer)
 import GRM.ErrM
 import System.Process
-import System.Directory
 import Control.Exception
+import System.Directory
+import System.IO
+import Control.Monad
 
 someFunc :: IO ()
 someFunc = do
+    hSetBuffering stdout NoBuffering
+    str <- getCurrentDirectory
+    putStr (str ++ " > ")
     cmdstr <- getLine
     case pCmd (myLexer cmdstr) of
             Ok t ->  interpret t
@@ -38,7 +43,7 @@ progrun (NPrg (Ident p) args) = do
     res <- try' $ createProcess (proc p arguments)
     case res of 
         Left ex -> print ex
-        Right _ -> return ()
+        Right (_,_,_,handleEet) -> void $ waitForProcess handleEet
     return ()
 
 getArg :: Arg -> String
