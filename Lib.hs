@@ -26,9 +26,12 @@ try' =  try
 
 progrun :: Prg -> IO ()
 progrun (NPrg (Ident p) args) = do 
-    res <- try' $ (createProcess (proc p []))
+    let arguments = map getArg args
+    res <- try' $ createProcess (proc p arguments)
     case res of 
-        Left ex -> putStrLn $ show ex
+        Left ex -> print ex
         Right _ -> return ()
     return ()
 
+getArg :: Arg -> String
+getArg (NArg arg) = arg
