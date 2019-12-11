@@ -1,0 +1,7 @@
+Cmd.                Cmd ::= [Prg] ;
+
+NPrg.               Prg ::= Ident [Arg] ;
+NArg.               Arg ::= String ;
+
+separator           Prg "|" ;
+separator           Arg "" ;
