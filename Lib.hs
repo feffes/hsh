@@ -25,26 +25,67 @@ someFunc = do
 
 interpret :: Cmd -> IO ()
 interpret (Cmd []) = return ()
-interpret (Cmd prgs) = mapM_ progrun prgs
+interpret (Cmd prgs) = runProgsPipe prgs
 
 try' :: IO a ->  IO (Either IOException a)
 try' =  try 
 
+
+runProgsPipe :: [Prg] -> IO ()
+runProgsPipe ((IPrg (Ident p) args):prgs) = do
+  let arguments = map getArg args
+  let nextpipe = CreatePipe
+  let process = (proc p arguments){std_out = nextpipe}
+  res <- try' $ createProcess (proc p arguments)
+  runProgsPipe' prgs nextpipe
+  case res of
+    Left ex -> print ex
+    Right (_,_,_,phandle) -> void $ waitForProcess phandle
+  return ()
+
+
+runProgsPipe' :: [Prg] -> StdStream -> IO ()
+runProgsPipe' [(IPrg (Ident p) args)] inpipe = do
+  let arguments = map getArg args
+  let process = (proc p arguments){std_in = inpipe}
+  res <- try' $ createProcess (proc p arguments)
+  case res of
+    Left ex -> print ex
+    Right (_,_,_,phandle) -> void $ waitForProcess phandle
+  return ()
+
+runProgsPipe' ((IPrg (Ident p) args):prgs) inpipe = do
+  let arguments = map getArg args
+  let nextpipe = CreatePipe
+  let process = (proc p arguments){std_in = inpipe,
+                                   std_out = nextpipe}
+  res <- try' $ createProcess (proc p arguments)
+  runProgsPipe' prgs nextpipe
+  case res of
+    Left ex -> print ex
+    Right (_,_,_,phandle) -> void $ waitForProcess phandle
+  return ()
+
+
 progrun :: Prg -> IO ()
-progrun (NPrg (Ident "cd") args) = do 
+progrun (IPrg (Ident "cd") args) = do 
     let arguments = map getArg args
     homedir <- getHomeDirectory
     case arguments of
         [] -> setCurrentDirectory homedir
         [x] -> setCurrentDirectory x
         (x:xs) -> putStrLn "cd only takes 1 argument"
-progrun (NPrg (Ident p) args) = do 
+progrun (IPrg (Ident p) args) = do 
     let arguments = map getArg args
     res <- try' $ createProcess (proc p arguments)
     case res of 
         Left ex -> print ex
-        Right (_,_,_,handleEet) -> void $ waitForProcess handleEet
+        Right (_,_,_,phandle) -> void $ waitForProcess phandle
     return ()
+
+
+
 
 getArg :: Arg -> String
 getArg (NArg arg) = arg
+getArg (IArg (Ident (arg))) = arg

@@ -1,7 +1,13 @@
 Cmd.                Cmd ::= [Prg] ;
 
-NPrg.               Prg ::= Ident [Arg] ;
+IPrg.               Prg ::= Ident [Arg] ;
+SPrg.               Prg ::= String ;
 NArg.               Arg ::= String ;
+IArg.               Arg ::= Ident ; -- This should be replace probably, 
 
 separator           Prg "|" ;
 separator           Arg "" ;
+
+
+
+--token Id ((digit | letter)*)
