@@ -1,5 +1,6 @@
 module Lib
-    ( someFunc
+    ( someFunc,
+      setup
     ) where
 
 import GRM.Abs 
@@ -11,6 +12,14 @@ import System.Directory
 import System.IO
 import Control.Monad
 import Control.Monad.IO.Class
+import System.Posix.Signals
+
+
+
+setup :: IO ()
+setup = do
+  void $ installHandler sigINT Ignore Nothing
+
 
 someFunc :: IO ()
 someFunc = do
