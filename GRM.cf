@@ -1,13 +1,20 @@
-Cmd.                Cmd ::= [Prg] ;
+FCmd.               Cmd ::= [Prg] ;
+BCmd.               Cmd ::= [Prg] "&" ;
 
-IPrg.               Prg ::= Ident [Arg] ;
+
+IPrg.               Prg ::= Id [Arg] ;
 SPrg.               Prg ::= String ;
+
 NArg.               Arg ::= String ;
-IArg.               Arg ::= Ident ; -- This should be replace probably, 
+IArg.               Arg ::= Id ; 
+RArg.               Arg ::= "{" Integer ".." Integer "}" ;
+LArg.               Arg ::= "{" [String] "}" ;
+
 
 separator           Prg "|" ;
-separator           Arg "" ;
+separator           Arg " " ;
+separator           String "," ;
+--terminator          Cmd "\n"; 
 
 
-
---token Id ((digit | letter)*)
+token Id (digit | letter | '.' | '/')+ ;
