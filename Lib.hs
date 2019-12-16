@@ -14,9 +14,8 @@ import Control.Monad
 import Control.Monad.IO.Class
 import System.Posix.Signals
 
-
-type Command = [Program]
-type Program = (String, [String])
+data Command = Background [Program] | Foreground [Program]
+data Program = Prog String [String] 
 
 
 setup :: IO ()

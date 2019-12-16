@@ -3,7 +3,7 @@ BCmd.               Cmd ::= [Prg] "&" ;
 
 
 IPrg.               Prg ::= Id [Arg] ;
-SPrg.               Prg ::= String ;
+SPrg.               Prg ::= String [Arg] ;
 
 NArg.               Arg ::= String ;
 IArg.               Arg ::= Id ; 
