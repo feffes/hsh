@@ -16,18 +16,14 @@ parseProg (SPrg prog args) = expandProg prog args
 
 -- Expands a single Prg into its respective programs
 expandProg :: String -> [Arg] -> [Program]
-expandProg ex args = 
+expandProg ex args = undefined
     where expand = map expandArg args :: [[String]]
 
 
-    --------- vänster trappa rekursivt
-joinArg :: [[String]] -> [[String]]
-joinArg (fst:strs) = (joinArg' fst ) ++ joinArg (strs)
 
-
-joinArg' :: [String] -> [[String]] -> [[String]]
-joinArg' thing (fst:rest) = (thing : joinArg' rest)
-
+combinations :: [[a]] -> [[a]]
+combinations []       = [[]]
+combinations (xs:xss) = [x : xs' | x <- xs, xs' <- combinations xss]
 
 
 {-

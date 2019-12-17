@@ -1,6 +1,8 @@
 module Lib
     ( someFunc,
-      setup
+      setup,
+      Command,
+      Program
     ) where
 
 import GRM.Abs 
