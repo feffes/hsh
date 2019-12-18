@@ -1,7 +1,20 @@
-Cmd.                Cmd ::= [Prg] ;
+FCmd.               Cmd ::= [Prg] ;
+BCmd.               Cmd ::= [Prg] "&" ;
 
-NPrg.               Prg ::= Ident [Arg] ;
+
+IPrg.               Prg ::= Id [Arg] ;
+SPrg.               Prg ::= String [Arg] ;
+
 NArg.               Arg ::= String ;
+IArg.               Arg ::= Id ; 
+RArg.               Arg ::= "{" Integer ".." Integer "}" ;
+LArg.               Arg ::= "{" [String] "}" ;
+
 
 separator           Prg "|" ;
 separator           Arg "" ;
+separator           String "," ;
+--terminator          Cmd "\n"; 
+
+
+token Id (digit | letter | '.' | '/')+ ;

@@ -1,5 +1,6 @@
 module Lib
-    ( someFunc
+    ( someFunc,
+      setup
     ) where
 
 import GRM.Abs 
@@ -10,41 +11,57 @@ import Control.Exception
 import System.Directory
 import System.IO
 import Control.Monad
+import Control.Monad.IO.Class
+import System.Posix.Signals
+import Parse (parse, Command(..), Program(..))
+
+
+setup :: IO ()
+setup = do
+  hSetBuffering stdout NoBuffering
+  void $ installHandler sigINT Ignore Nothing
+
 
 someFunc :: IO ()
 someFunc = do
-    hSetBuffering stdout NoBuffering
-    str <- getCurrentDirectory
-    putStr (str ++ " > ")
-    cmdstr <- getLine
-    case pCmd (myLexer cmdstr) of
-            Ok t ->  interpret t
-            Bad err -> putStrLn err
-    someFunc
+  str <- getCurrentDirectory
+  putStr (str ++ " > ")
+  cmdstr <- getLine
+  case pCmd (myLexer cmdstr) of
+          Ok t -> interpret t
+          Bad err -> putStrLn err
+  someFunc
 
 
 interpret :: Cmd -> IO ()
-interpret (Cmd []) = return ()
-interpret (Cmd prgs) = mapM_ progrun prgs
+interpret cmd = mapM_ runProgsPipe prs
+    where prs = parse cmd
 
 try' :: IO a ->  IO (Either IOException a)
 try' =  try 
 
-progrun :: Prg -> IO ()
-progrun (NPrg (Ident "cd") args) = do 
-    let arguments = map getArg args
-    homedir <- getHomeDirectory
-    case arguments of
-        [] -> setCurrentDirectory homedir
-        [x] -> setCurrentDirectory x
-        (x:xs) -> putStrLn "cd only takes 1 argument"
-progrun (NPrg (Ident p) args) = do 
-    let arguments = map getArg args
-    res <- try' $ createProcess (proc p arguments)
-    case res of 
-        Left ex -> print ex
-        Right (_,_,_,handleEet) -> void $ waitForProcess handleEet
+
+runProgsPipe :: Command -> IO ()
+runProgsPipe (Foreground prgs@(Prog exec args : rest)) = foregroundPipe prgs (UseHandle stdin) 
+runProgsPipe (Background prgs) = do
     return ()
 
-getArg :: Arg -> String
-getArg (NArg arg) = arg
+
+foregroundPipe :: [Program] -> StdStream -> IO ()
+foregroundPipe [Prog exec args] inpipe = do
+  let process = (proc exec args){std_in = inpipe}
+  res <- try' $ createProcess process
+  case res of
+    Left ex -> print ex
+    Right (_,_,_,phandle) -> void $ waitForProcess phandle
+  return ()
+
+foregroundPipe (Prog exec args : rest) inpipe = do
+  let process = (proc exec args){std_in = inpipe, std_out = CreatePipe}
+  res <- try' $ createProcess process
+  case res of
+    Left ex -> print ex
+    Right (_,Just so,_,phandle) -> do 
+      foregroundPipe rest (UseHandle so)
+      void $ waitForProcess phandle
+  return ()

@@ -10,7 +10,7 @@ all: hsh
 
 # The extra dependency GRM/Test ensures that the parser is built from GRM.cf
 hsh: $(files) GRM/Test
-	ghc --make hsh.hs -o hsh
+	ghc -threaded --make hsh.hs -o hsh
 
 # Rules to build the parser:
 
