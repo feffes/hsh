@@ -1,7 +1,15 @@
-module Parse where
+module Parse (parse, Command(..), Program(..)) where
 
 import GRM.Abs
-import Lib (Command(..), Program(..))
+
+
+data Command = Background [Program] | Foreground [Program]
+      deriving (Show, Eq)
+      
+data Program = Prog String [String] 
+      deriving (Show, Eq)
+
+
 
 parse :: Cmd -> [Command] 
 parse (BCmd prgs) = map (Foreground) $ combinations $ map (parseProg) prgs

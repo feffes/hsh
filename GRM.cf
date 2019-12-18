@@ -12,7 +12,7 @@ LArg.               Arg ::= "{" [String] "}" ;
 
 
 separator           Prg "|" ;
-separator           Arg " " ;
+separator           Arg "" ;
 separator           String "," ;
 --terminator          Cmd "\n"; 
 

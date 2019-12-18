@@ -1,8 +1,6 @@
 module Lib
     ( someFunc,
-      setup,
-      Command(..),
-      Program(..)
+      setup
     ) where
 
 import GRM.Abs 
@@ -15,12 +13,7 @@ import System.IO
 import Control.Monad
 import Control.Monad.IO.Class
 import System.Posix.Signals
-
-
-data Command = Background [Program] | Foreground [Program]
-      deriving (Show, Eq)
-data Program = Prog String [String] 
-      deriving (Show, Eq)
+import Parse (parse, Command(..), Program(..))
 
 
 setup :: IO ()
