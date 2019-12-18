@@ -44,7 +44,7 @@ try' =  try
 runProgsPipe :: Command -> IO ()
 runProgsPipe (Foreground []) = return ()
 runProgsPipe (Background []) = return ()
-runProgsPipe (Foreground prgs@(Prog exec args : rest)) = foregroundPipe prgs (UseHandle stdin) 
+runProgsPipe (Foreground prgs@(Prog exec args : rest)) = foregroundPipe prgs (UseHandle stdin)
 runProgsPipe (Background prgs) = backgroundPipe prgs
 
 
@@ -68,6 +68,6 @@ foregroundPipe (Prog exec args : rest) inpipe = do
 
 backgroundPipe :: [Program] -> IO ()
 backgroundPipe [Prog exec args] = do
-  let process = (exec args)
-  res <- try' $ spawnProcess process
+  let process = proc exec args
+  --res <- try' $ 
   return ()
