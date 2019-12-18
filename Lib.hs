@@ -15,8 +15,9 @@ import Control.Monad.IO.Class
 import System.Posix.Signals
 
 
-type Command = [Program]
-type Program = (String, [String])
+data Command = Background [Program] | Foreground [Program]
+data Program = Prog String [String]
+
 
 
 setup :: IO ()
@@ -31,77 +32,40 @@ someFunc = do
   putStr (str ++ " > ")
   cmdstr <- getLine
   case pCmd (myLexer cmdstr) of
-          Ok t ->  interpret t
+          Ok t -> interpret t
           Bad err -> putStrLn err
   someFunc
 
 
 interpret :: Cmd -> IO ()
-interpret (FCmd []) = return ()
-interpret (FCmd [x]) = progrun x
-interpret (FCmd prgs) = runProgsPipe prgs
+interpret cmd = mapM_ runProgsPipe prs
+    where prs = parse cmd
 
 try' :: IO a ->  IO (Either IOException a)
 try' =  try 
 
 
-runProgsPipe :: [Prg] -> IO ()
-runProgsPipe ((IPrg (Id p) args):prgs) = do
-  let arguments = map getArg args
-  let process = (proc p arguments){std_out = CreatePipe}
-  res <- try' $ createProcess process
-  case res of
-    Left ex -> print ex
-    Right (_,Just so,_,phandle) -> do 
-      runProgsPipe' prgs (UseHandle so)
-      void $ waitForProcess phandle
-    Right (_,Nothing,_,_) -> do
-      error "I should not be able to get here"
-  return ()
+runProgsPipe :: Command -> IO ()
+runProgsPipe (Foreground prgs@(Prog exec args : rest)) = foregroundPipe prgs (UseHandle stdin) 
+runProgsPipe (Background prgs) = do
+    return ()
 
 
-runProgsPipe' :: [Prg] -> StdStream -> IO ()
-runProgsPipe' [(IPrg (Id p) args)] inpipe = do
-  let arguments = map getArg args
-  let process = (proc p arguments){std_in = inpipe}
+foregroundPipe :: [Program] -> StdStream -> IO ()
+foregroundPipe [Prog exec args] inpipe = do
+  let process = (proc exec args){std_in = inpipe}
   res <- try' $ createProcess process
   case res of
     Left ex -> print ex
     Right (_,_,_,phandle) -> void $ waitForProcess phandle
   return ()
 
-runProgsPipe' ((IPrg (Id p) args):prgs) inpipe = do
-  let arguments = map getArg args
-  let process = (proc p arguments){std_in = inpipe,
-                                   std_out = CreatePipe}
+foregroundPipe (Prog exec args : rest) inpipe = do
+  let process = (proc exec args){std_in = inpipe, std_out = CreatePipe}
   res <- try' $ createProcess process
   case res of
     Left ex -> print ex
     Right (_,Just so,_,phandle) -> do 
-      runProgsPipe' prgs (UseHandle so)
+      foregroundPipe rest (UseHandle so)
       void $ waitForProcess phandle
   return ()
-
-
-progrun :: Prg -> IO ()
-progrun (IPrg (Id "cd") args) = do 
-    let arguments = map getArg args
-    homedir <- getHomeDirectory
-    case arguments of
-        [] -> setCurrentDirectory homedir
-        [x] -> setCurrentDirectory x
-        (x:xs) -> putStrLn "cd only takes 1 argument"
-progrun (IPrg (Id p) args) = do 
-    let arguments = map getArg args
-    res <- try' $ createProcess (proc p arguments)
-    case res of 
-        Left ex -> print ex
-        Right (_,_,_,phandle) -> void $ waitForProcess phandle
-    return ()
-
-
-
-
-getArg :: Arg -> String
-getArg (NArg arg) = arg
-getArg (IArg (Id (arg))) = arg
