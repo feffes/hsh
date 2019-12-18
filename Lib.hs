@@ -14,26 +14,36 @@ import Control.Monad
 import Control.Monad.IO.Class
 import System.Posix.Signals
 import Parse (parse, Command(..), Program(..))
+import System.Console.Haskeline
+
 
 
 setup :: IO ()
 setup = do
   hSetBuffering stdout NoBuffering
-  void $ installHandler sigINT Ignore Nothing
+  --void $ installHandler sigINT Ignore Nothing
 
 
 someFunc :: IO ()
-someFunc = do
-  str <- getCurrentDirectory
-  putStr (str ++ " > ")
-  cmdstr <- getLine
-  case pCmd (myLexer cmdstr) of
-          Ok t -> interpret t
-          Bad err -> putStrLn err
-  someFunc
+someFunc = runInputT defaultSettings loop
+  where
+  loop :: InputT IO ()
+  loop = do
+      str <- liftIO getCurrentDirectory
+      let prmpt = (str ++ " > ")
+      minput <- getInputLine prmpt
+      case minput of
+          Nothing -> return ()
+          Just input -> do  case pCmd (myLexer input) of
+                              Ok t -> liftIO $ interpret t
+                              Bad err -> liftIO $ putStrLn err
+                            loop
+
 
 
 interpret :: Cmd -> IO ()
+interpret (BCmd []) = return ()
+interpret (FCmd []) = return ()
 interpret cmd = mapM_ runProgsPipe prs
     where prs = parse cmd
 
@@ -42,8 +52,6 @@ try' =  try
 
 
 runProgsPipe :: Command -> IO ()
-runProgsPipe (Foreground []) = return ()
-runProgsPipe (Background []) = return ()
 runProgsPipe (Foreground prgs@(Prog exec args : rest)) = foregroundPipe prgs (UseHandle stdin)
 runProgsPipe (Background prgs) = backgroundPipe prgs
 

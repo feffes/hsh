@@ -17,4 +17,4 @@ separator           Arg "" ;
 separator           String "," ;
 --terminator          Cmd "\n";
 
-token Id ( letter | '.' | '/')+ ;
+token Id ( letter | '.' | '/' | '-')+ ;
