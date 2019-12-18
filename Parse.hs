@@ -1,19 +1,20 @@
 module Parse (parse, Command(..), Program(..)) where
 
 import GRM.Abs
+import Test.QuickCheck
 
 
 data Command = Background [Program] | Foreground [Program]
       deriving (Show, Eq)
-      
-data Program = Prog String [String] 
+
+data Program = Prog String [String]
       deriving (Show, Eq)
 
 
 
-parse :: Cmd -> [Command] 
-parse (BCmd prgs) = map (Background) $ combinations $ map (parseProg) prgs
-parse (FCmd prgs) = map (Foreground) $ combinations $ map (parseProg) prgs
+parse :: Cmd -> [Command]
+parse (BCmd prgs) = map Background $ combinations $ map parseProg prgs
+parse (FCmd prgs) = map Foreground $ combinations $ map parseProg prgs
 
 
 
@@ -36,6 +37,13 @@ combinations :: [[a]] -> [[a]]
 combinations []       = [[]]
 combinations (xs:xss) = [x : xs' | x <- xs, xs' <- combinations xss]
 
+prop_test_combinations :: [[Int]] -> Bool
+prop_test_combinations list  = testLength
+    where
+        lengthCombo = length (combinations list)
+        lengthBefore = product (map length list)
+        testLength = lengthBefore == lengthCombo
+
 
 
 expandArg :: Arg -> [String]
@@ -48,5 +56,7 @@ expandArg (RArg low high) = final
             final = case length range of
                 0 -> case length irange of
                     0 -> error "how did i get here"
-                    i -> map show $ reverse irange 
+                    i -> map show $ reverse irange
                 i -> map show range
+
+
