@@ -43,8 +43,7 @@ try' =  try
 
 runProgsPipe :: Command -> IO ()
 runProgsPipe (Foreground prgs@(Prog exec args : rest)) = foregroundPipe prgs (UseHandle stdin) 
-runProgsPipe (Background prgs) = do
-    return ()
+runProgsPipe (Background prgs) = backgroundPipe prgs
 
 
 foregroundPipe :: [Program] -> StdStream -> IO ()
@@ -55,7 +54,6 @@ foregroundPipe [Prog exec args] inpipe = do
     Left ex -> print ex
     Right (_,_,_,phandle) -> void $ waitForProcess phandle
   return ()
-
 foregroundPipe (Prog exec args : rest) inpipe = do
   let process = (proc exec args){std_in = inpipe, std_out = CreatePipe}
   res <- try' $ createProcess process
@@ -64,4 +62,10 @@ foregroundPipe (Prog exec args : rest) inpipe = do
     Right (_,Just so,_,phandle) -> do 
       foregroundPipe rest (UseHandle so)
       void $ waitForProcess phandle
+  return ()
+
+backgroundPipe :: [Program] -> IO ()
+backgroundPipe [Prog exec args] = do
+  let process = (exec args)
+  res <- try' $ spawnProcess process
   return ()
