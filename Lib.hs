@@ -59,6 +59,12 @@ runProgsPipe (Background prgs) = do
 
 
 foregroundPipe :: [Program] -> StdStream -> IO ()
+foregroundPipe [Prog "cd" args] inpipe = do 
+  homedir <- getHomeDirectory
+  case args of
+    [] -> setCurrentDirectory homedir
+    [x] -> setCurrentDirectory x
+    (x:xs) -> putStrLn "cd: only takes one argument"
 foregroundPipe [Prog exec args] inpipe = do
   let process = (proc exec args){std_in = inpipe}
   res <- try' $ createProcess process
@@ -67,6 +73,13 @@ foregroundPipe [Prog exec args] inpipe = do
     Right (_,_,_,phandle) -> void $ waitForProcess phandle
   print "Done"
   return ()
+foregroundPipe (Prog "cd" args : rest) inpipe = do 
+  homedir <- getHomeDirectory
+  case args of
+    [] -> setCurrentDirectory homedir
+    [x] -> setCurrentDirectory x
+    (x:xs) -> putStrLn "cd: only takes one argument"
+  foregroundPipe rest CreatePipe
 foregroundPipe (Prog exec args : rest) inpipe = do
   let process = (proc exec args){std_in = inpipe, std_out = CreatePipe}
   res <- try' $ createProcess process
