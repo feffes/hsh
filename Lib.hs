@@ -42,6 +42,8 @@ try' =  try
 
 
 runProgsPipe :: Command -> IO ()
+runProgsPipe (Foreground []) = return ()
+runProgsPipe (Background []) = return ()
 runProgsPipe (Foreground prgs@(Prog exec args : rest)) = foregroundPipe prgs (UseHandle stdin) 
 runProgsPipe (Background prgs) = do
     return ()

@@ -5,16 +5,16 @@ BCmd.               Cmd ::= [Prg] "&" ;
 IPrg.               Prg ::= Id [Arg] ;
 SPrg.               Prg ::= String [Arg] ;
 
-NArg.               Arg ::= String ;
-IArg.               Arg ::= Id ; 
-RArg.               Arg ::= "{" Integer ".." Integer "}" ;
-LArg.               Arg ::= "{" [String] "}" ;
+RArg.               Arg1 ::= "{" Integer ".." Integer "}" ;
+LArg.               Arg2 ::= "{" [String] "}" ;
+NArg.               Arg3 ::= String ;
+IArg.               Arg3 ::= Id ; 
+coercions Arg 3 ;
 
 
 separator           Prg "|" ;
 separator           Arg "" ;
 separator           String "," ;
---terminator          Cmd "\n"; 
+--terminator          Cmd "\n";
 
-
-token Id (digit | letter | '.' | '/')+ ;
+token Id ( letter | '.' | '/')+ ;
