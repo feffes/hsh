@@ -12,7 +12,7 @@ data Program = Prog String [String]
 
 
 parse :: Cmd -> [Command] 
-parse (BCmd prgs) = map (Foreground) $ combinations $ map (parseProg) prgs
+parse (BCmd prgs) = map (Background) $ combinations $ map (parseProg) prgs
 parse (FCmd prgs) = map (Foreground) $ combinations $ map (parseProg) prgs
 
 

@@ -3,7 +3,7 @@ module Lib
       setup
     ) where
 
-import GRM.Abs 
+import GRM.Abs
 import GRM.Par (pCmd, myLexer)
 import GRM.ErrM
 import System.Process
@@ -15,13 +15,13 @@ import Control.Monad.IO.Class
 import System.Posix.Signals
 import Parse (parse, Command(..), Program(..))
 import System.Console.Haskeline
-
+import Control.Concurrent
 
 
 setup :: IO ()
-setup = do
-  hSetBuffering stdout NoBuffering
+setup = hSetBuffering stdout NoBuffering
   --void $ installHandler sigINT Ignore Nothing
+
 
 
 someFunc :: IO ()
@@ -48,12 +48,14 @@ interpret cmd = mapM_ runProgsPipe prs
     where prs = parse cmd
 
 try' :: IO a ->  IO (Either IOException a)
-try' =  try 
+try' =  try
 
 
 runProgsPipe :: Command -> IO ()
 runProgsPipe (Foreground prgs@(Prog exec args : rest)) = foregroundPipe prgs (UseHandle stdin)
-runProgsPipe (Background prgs) = backgroundPipe prgs
+runProgsPipe (Background prgs) = do
+  forkIO $ foregroundPipe prgs CreatePipe
+  return ()
 
 
 foregroundPipe :: [Program] -> StdStream -> IO ()
@@ -63,19 +65,14 @@ foregroundPipe [Prog exec args] inpipe = do
   case res of
     Left ex -> print ex
     Right (_,_,_,phandle) -> void $ waitForProcess phandle
+  print "Done"
   return ()
 foregroundPipe (Prog exec args : rest) inpipe = do
   let process = (proc exec args){std_in = inpipe, std_out = CreatePipe}
   res <- try' $ createProcess process
   case res of
     Left ex -> print ex
-    Right (_,Just so,_,phandle) -> do 
+    Right (_,Just so,_,phandle) -> do
       foregroundPipe rest (UseHandle so)
       void $ waitForProcess phandle
-  return ()
-
-backgroundPipe :: [Program] -> IO ()
-backgroundPipe [Prog exec args] = do
-  let process = proc exec args
-  --res <- try' $ 
   return ()
